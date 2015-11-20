@@ -38,7 +38,7 @@ class MBI(object):
         nC = numpy.prod(ms)
         C = numpy.zeros((nC,nf),order='F')
         for i in range(nf):
-            C[:,i] = scipy.sparse.linalg.cg(BTB,BTP[:,i])[0]
+            C[:,i] = scipy.sparse.linalg.cg(BTB,BTP[:,i], tol=1e-12)[0]
 
         Cx = []
         for i in range(nx):
@@ -46,7 +46,7 @@ class MBI(object):
             B = self.assembleJacobian(0, 0, 1, n, k*n, k, m, ts[i])
             BT = B.transpose()
             BTB, BTP = BT.dot(B), BT.dot(xs[i])
-            Cx.append(scipy.sparse.linalg.cg(BTB,BTP)[0])
+            Cx.append(scipy.sparse.linalg.cg(BTB,BTP,tol=1e-12)[0])
             Cx[-1][0] = xs[i][0]
             Cx[-1][-1] = xs[i][-1]
 
@@ -77,7 +77,10 @@ class MBI(object):
         t = numpy.zeros((nP,nx),order='F')
         for i in range(nx):
             t[:,i] = MBIlib.inversemap(ks[i], ms[i], nP, x[:,i], self.Cx[i])
+            t[:,i] = numpy.linspace(0,1,nP) 
+        numpy.savetxt('params', t)
 
         i1, i2 = max(0, d1-1), max(0, d2-1)
         nC, nCx1, nCx2 = self.C.shape[0], self.Cx[i1].shape[0], self.Cx[i2].shape[0]
-        return MBIlib.evaluate(d1, d2, nx, nf, nC, nCx1, nCx2, nP, ks, ms, t, self.C, self.Cx[i1], self.Cx[i2])
+        y = MBIlib.evaluate(d1, d2, nx, nf, nC, nCx1, nCx2, nP, ks, ms, t, self.C, self.Cx[i1], self.Cx[i2])
+        return y
