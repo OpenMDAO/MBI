@@ -78,9 +78,8 @@ class MBI(object):
         for i in range(nx):
             t[:,i] = MBIlib.inversemap(ks[i], ms[i], nP, x[:,i], self.Cx[i])
             t[:,i] = numpy.linspace(0,1,nP) 
-        numpy.savetxt('params', t)
 
         i1, i2 = max(0, d1-1), max(0, d2-1)
         nC, nCx1, nCx2 = self.C.shape[0], self.Cx[i1].shape[0], self.Cx[i2].shape[0]
-        y = MBIlib.evaluate(d1, d2, nx, nf, nC, nCx1, nCx2, nP, ks, ms, t, self.C, self.Cx[i1], self.Cx[i2])
-        return y
+        return MBIlib.evaluate(d1, d2, nx, nf, nC, nCx1, nCx2, nP, ks, ms, t, self.C, self.Cx[i1], self.Cx[i2])
+]
