@@ -81,4 +81,3 @@ class MBI(object):
         i1, i2 = max(0, d1-1), max(0, d2-1)
         nC, nCx1, nCx2 = self.C.shape[0], self.Cx[i1].shape[0], self.Cx[i2].shape[0]
         return MBIlib.evaluate(d1, d2, nx, nf, nC, nCx1, nCx2, nP, ks, ms, t, self.C, self.Cx[i1], self.Cx[i2])
-]
