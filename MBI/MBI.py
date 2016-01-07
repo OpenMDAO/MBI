@@ -1,6 +1,6 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy, scipy.sparse, scipy.sparse.linalg, time
-import MBIlib
+from . import MBIlib
 
 
 class MBI(object):
@@ -68,10 +68,10 @@ class MBI(object):
         maxV = numpy.max
         for i in range(nx):
             if minV(x[:,i]) < minV(self.Cx[i]):
-                print 'MBI error: min value out of bounds', i, minV(x[:,i]), minV(self.Cx[i])
+                print('MBI error: min value out of bounds', i, minV(x[:,i]), minV(self.Cx[i]))
                 #raise Exception('MBI evaluate error: min value out of bounds')
             if maxV(x[:,i]) > maxV(self.Cx[i]):
-                print 'MBI error: max value out of bounds', i, maxV(x[:,i]), maxV(self.Cx[i])
+                print('MBI error: max value out of bounds', i, maxV(x[:,i]), maxV(self.Cx[i]))
                 #raise Exception('MBI evaluate error: max value out of bounds')
 
         t = numpy.zeros((nP,nx),order='F')
