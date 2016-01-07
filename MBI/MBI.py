@@ -1,6 +1,6 @@
-from __future__ import division
+from __future__ import division, print_function
 import numpy, scipy.sparse, scipy.sparse.linalg, time
-import MBIlib
+from . import MBIlib
 
 
 class MBI(object):
@@ -38,7 +38,7 @@ class MBI(object):
         nC = numpy.prod(ms)
         C = numpy.zeros((nC,nf),order='F')
         for i in range(nf):
-            C[:,i] = scipy.sparse.linalg.cg(BTB,BTP[:,i], tol=1e-12)[0]
+            C[:,i] = scipy.sparse.linalg.cg(BTB,BTP[:,i])[0]
 
         Cx = []
         for i in range(nx):
@@ -46,7 +46,7 @@ class MBI(object):
             B = self.assembleJacobian(0, 0, 1, n, k*n, k, m, ts[i])
             BT = B.transpose()
             BTB, BTP = BT.dot(B), BT.dot(xs[i])
-            Cx.append(scipy.sparse.linalg.cg(BTB,BTP,tol=1e-12)[0])
+            Cx.append(scipy.sparse.linalg.cg(BTB,BTP)[0])
             Cx[-1][0] = xs[i][0]
             Cx[-1][-1] = xs[i][-1]
 
@@ -68,10 +68,10 @@ class MBI(object):
         maxV = numpy.max
         for i in range(nx):
             if minV(x[:,i]) < minV(self.Cx[i]):
-                print 'MBI error: min value out of bounds', i, minV(x[:,i]), minV(self.Cx[i])
+                print('MBI error: min value out of bounds', i, minV(x[:,i]), minV(self.Cx[i]))
                 #raise Exception('MBI evaluate error: min value out of bounds')
             if maxV(x[:,i]) > maxV(self.Cx[i]):
-                print 'MBI error: max value out of bounds', i, maxV(x[:,i]), maxV(self.Cx[i])
+                print('MBI error: max value out of bounds', i, maxV(x[:,i]), maxV(self.Cx[i]))
                 #raise Exception('MBI evaluate error: max value out of bounds')
 
         t = numpy.zeros((nP,nx),order='F')

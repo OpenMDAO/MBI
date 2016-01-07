@@ -3,11 +3,11 @@ from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
 sources = [
-    'src/basis.f90',
-    'src/evaluate.f90',
-    'src/jacobian.f90',
-    'src/knots.f90',
-    'src/paramuni.f90',
+    'MBI/src/basis.f90',
+    'MBI/src/evaluate.f90',
+    'MBI/src/jacobian.f90',
+    'MBI/src/knots.f90',
+    'MBI/src/paramuni.f90',
     ]
 
 config = Configuration('MBI')
@@ -25,4 +25,3 @@ kwds = {'install_requires': ['numpy', 'scipy'],
 kwds.update(config.todict())
 
 setup(**kwds)
-
