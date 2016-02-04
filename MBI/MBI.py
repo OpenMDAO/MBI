@@ -1,5 +1,8 @@
 from __future__ import division, print_function
-import numpy, scipy.sparse, scipy.sparse.linalg, time
+import numpy
+import scipy.sparse
+import scipy.sparse.linalg
+import warnings
 from . import MBIlib
 
 
@@ -52,9 +55,17 @@ class MBI(object):
 
         self.C, self.Cx = C, Cx
 
+        self._bounds_error = 'print'
+
     def assembleJacobian(self, d1, d2, nx, nP, nB, ks, ms, t):
         Ba, Bi, Bj = MBIlib.computejacobian(d1, d2, nx, nP, nB, ks, ms, t)
         return scipy.sparse.csc_matrix((Ba,(Bi,Bj)))
+
+    def seterr(self,bounds):
+        if bounds not in ('ignore','warn','raise','print'):
+            raise ValueError("Unacceptable value for bounds error behavior.\
+             Must be one of 'ignore', 'warn', 'raise', or 'print'")
+        self._bounds_error = bounds
 
     def getJacobian(self, d1, d2):
         return self.assembleJacobian(d1, d2, self.nx, self.nT, self.nT*numpy.prod(self.ks), self.ks, self.ms, self.t)
@@ -68,11 +79,27 @@ class MBI(object):
         maxV = numpy.max
         for i in range(nx):
             if minV(x[:,i]) < minV(self.Cx[i]):
-                print('MBI error: min value out of bounds', i, minV(x[:,i]), minV(self.Cx[i]))
-                #raise Exception('MBI evaluate error: min value out of bounds')
+                if self._bounds_error == 'print':
+                    print('MBI error: min value out of bounds', i, minV(x[:,i]), minV(self.Cx[i]))
+                elif self._bounds_error == 'raise':
+                    raise ValueError('MBI error:  min value out of bounds at index {0}.  '
+                                     '{1} < {2}'.format(i,minV(x[:,i]), minV(self.Cx[i])))
+                elif self._bounds_error == 'warn':
+                    warnings.warn('MBI error:  min value out of bounds at index {0}.  '
+                                  '{1} < {2}'.format(i,minV(x[:,i]), minV(self.Cx[i])))
+                elif self._bounds_error == 'ignore':
+                    pass
             if maxV(x[:,i]) > maxV(self.Cx[i]):
-                print('MBI error: max value out of bounds', i, maxV(x[:,i]), maxV(self.Cx[i]))
-                #raise Exception('MBI evaluate error: max value out of bounds')
+                if self._bounds_error == 'print':
+                    print('MBI error: max value out of bounds', i, maxV(x[:,i]), maxV(self.Cx[i]))
+                elif self._bounds_error == 'raise':
+                    raise ValueError('MBI error:  max value out of bounds at index {0}.  '
+                                     '{1} < {2}'.format(i,maxV(x[:,i]), maxV(self.Cx[i])))
+                elif self._bounds_error == 'warn':
+                    warnings.warn('MBI error:  min value out of bounds at index {0}.  '
+                                  '{1} < {2}'.format(i,minV(x[:,i]), minV(self.Cx[i])))
+                elif self._bounds_error == 'ignore':
+                    pass
 
         t = numpy.zeros((nP,nx),order='F')
         for i in range(nx):
