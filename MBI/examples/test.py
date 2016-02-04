@@ -1,3 +1,4 @@
+import os.path
 import unittest
 
 import MBI
@@ -7,7 +8,7 @@ import time
 
 
 class MBITestCase(unittest.TestCase):
-    
+
     def setUp(self):
         pass
 
@@ -35,49 +36,49 @@ class MBITestCase(unittest.TestCase):
         t0 = time.time()
         f0 = m.evaluate(P)
 
-        # print time.time() - t0
+        # print time.time()-t0
         # print '---f'
         # print f0
 
         # print '---df/dx'
-        assert_allclose(m.evaluate(P, 1, 0), (m.evaluate(P + h * e1) - f0) / h, rtol=1.e-4)
+        assert_allclose(m.evaluate(P, 1, 0), (m.evaluate(P + h*e1) - f0)/h, rtol=1.e-4)
         # print '---df/dy'
-        assert_allclose(m.evaluate(P, 2, 0), (m.evaluate(P + h * e2) - f0) / h, rtol=1.e-4)
+        assert_allclose(m.evaluate(P, 2, 0), (m.evaluate(P + h*e2) - f0)/h, rtol=1.e-4)
         # print '---d2f/dx2'
         assert_allclose(m.evaluate(P, 1, 1),
-                        (m.evaluate(P + h * e1) - 2 * f0 + m.evaluate(P - h * e1)) / h ** 2, rtol=1.e-3)
+                        (m.evaluate(P+h*e1) - 2*f0+m.evaluate(P - h*e1))/h ** 2, rtol=1.e-3)
         # print '---d2f/dxdy'
         assert_allclose(m.evaluate(P, 1, 2),
-                        (m.evaluate(P + h * e1 + h * e2) - m.evaluate(P + h * e1 - h * e2) -
-                         m.evaluate(P - h * e1 + h * e2) + m.evaluate(P - h * e1 - h * e2)) / 4.0 / h ** 2, rtol=1.e-3)
+                        (m.evaluate(P+h*e1+h*e2) - m.evaluate(P + h*e1 - h*e2)-
+                         m.evaluate(P-h*e1+h*e2) + m.evaluate(P - h*e1 - h*e2))/4.0/h ** 2, rtol=1.e-3)
         # print '---d2f/dydx'
         assert_allclose(m.evaluate(P, 2, 1),
-                        (m.evaluate(P + h * e1 + h * e2) - m.evaluate(P + h * e1 - h * e2) -
-                         m.evaluate(P - h * e1 + h * e2) + m.evaluate(P - h * e1 - h * e2)) / 4.0 / h ** 2, rtol=1.e-3)
+                        (m.evaluate(P+h*e1+h*e2) - m.evaluate(P + h*e1 - h*e2)-
+                         m.evaluate(P-h*e1+h*e2) + m.evaluate(P - h*e1 - h*e2))/4.0/h ** 2, rtol=1.e-3)
         # print '---d2f/dy2'
         assert_allclose(m.evaluate(P, 2, 2),
-                        (m.evaluate(P + h * e2) - 2 * f0 + m.evaluate(P - h * e2)) / h ** 2, rtol=1.e-3)
+                        (m.evaluate(P+h*e2) - 2*f0+m.evaluate(P - h*e2))/h ** 2, rtol=1.e-3)
 
         # print '---df/dx'
         # print m.evaluate(P,1,0)
-        # print (m.evaluate(P+h*e1) - f0)/h
+        # print (m.evaluate(P+h*e1)-f0)/h
         # print '---df/dy'
         # print m.evaluate(P,2,0)
-        # print (m.evaluate(P+h*e2) - f0)/h
+        # print (m.evaluate(P+h*e2)-f0)/h
         # print '---d2f/dx2'
         # print m.evaluate(P,1,1)
-        # print (m.evaluate(P+h*e1) - 2*f0 + m.evaluate(P-h*e1))/h**2
+        # print (m.evaluate(P+h*e1)-2*f0+m.evaluate(P-h*e1))/h**2
         # print '---d2f/dxdy'
         # print m.evaluate(P,1,2)
-        # print (m.evaluate(P+h*e1+h*e2) - m.evaluate(P+h*e1-h*e2) - m.evaluate(P-h*e1+h*e2) + m.evaluate(
+        # print (m.evaluate(P+h*e1+h*e2)-m.evaluate(P+h*e1-h*e2)-m.evaluate(P-h*e1+h*e2)+m.evaluate(
         # P-h*e1-h*e2))/4.0/h**2
         # print '---d2f/dydx'
         # print m.evaluate(P,2,1)
-        # print (m.evaluate(P+h*e1+h*e2) - m.evaluate(P+h*e1-h*e2) - m.evaluate(P-h*e1+h*e2) + m.evaluate(
+        # print (m.evaluate(P+h*e1+h*e2)-m.evaluate(P+h*e1-h*e2)-m.evaluate(P-h*e1+h*e2)+m.evaluate(
         # P-h*e1-h*e2))/4.0/h**2
         # print '---d2f/dy2'
         # print m.evaluate(P,2,2)
-        # print (m.evaluate(P+h*e2) - 2*f0 + m.evaluate(P-h*e2))/h**2
+        # print (m.evaluate(P+h*e2)-2*f0+m.evaluate(P-h*e2))/h**2
 
     def test_raise(self):
         nx = 12
@@ -142,6 +143,20 @@ class MBITestCase(unittest.TestCase):
 
         m.evaluate(P)
         assert (True)
+
+    def test_pep8(self):
+        try:
+            import pep8
+        except:
+            return
+
+        mbidir = os.path.split(MBI.__file__)[0]
+        fchecker = pep8.Checker(os.path.join(mbidir,'MBI.py'))
+        fchecker.max_line_length = 120  # ignore line-too-long errors
+        errors = fchecker.check_all()
+        assert(errors == 0)
+
+
 
 
 if __name__ == '__main__':

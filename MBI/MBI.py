@@ -12,8 +12,10 @@ class MBI(object):
         nf = 1 if len(P.shape) is nx else P.shape[nx]
 
         ns = numpy.array(P.shape[:nx], order='F')
-        ms = numpy.array([ms0[i] if ms0 is not None else int(ns[i] / 3) for i in range(nx)], int)
-        ks = numpy.array([min(ks0[i] if ks0 is not None else 4, ms[i]) for i in range(nx)], int)
+        ms = numpy.array([ms0[i] if ms0 is not None else int(ns[i]/3)
+                          for i in range(nx)], int)
+        ks = numpy.array([min(ks0[i] if ks0 is not None else 4, ms[i])
+                          for i in range(nx)], int)
         nT = numpy.prod(ns)
 
         self.xs = xs
@@ -45,7 +47,7 @@ class MBI(object):
         Cx = []
         for i in range(nx):
             k, m, n = ks[i], ms[i], ns[i]
-            B = self.assembleJacobian(0, 0, 1, n, k * n, k, m, ts[i])
+            B = self.assembleJacobian(0, 0, 1, n, k*n, k, m, ts[i])
             BT = B.transpose()
             BTB, BTP = BT.dot(B), BT.dot(xs[i])
             Cx.append(scipy.sparse.linalg.cg(BTB, BTP)[0])
@@ -67,7 +69,9 @@ class MBI(object):
         self._bounds_error = bounds
 
     def getJacobian(self, d1, d2):
-        return self.assembleJacobian(d1, d2, self.nx, self.nT, self.nT * numpy.prod(self.ks), self.ks, self.ms, self.t)
+        return self.assembleJacobian(d1, d2, self.nx, self.nT,
+                                     self.nT*numpy.prod(self.ks), self.ks,
+                                     self.ms, self.t)
 
     def evaluate(self, x, d1=0, d2=0):
         nx, nf, nT = self.nx, self.nf, self.nT
@@ -104,6 +108,6 @@ class MBI(object):
         for i in range(nx):
             t[:, i] = MBIlib.inversemap(ks[i], ms[i], nP, x[:, i], self.Cx[i])
 
-        i1, i2 = max(0, d1 - 1), max(0, d2 - 1)
+        i1, i2 = max(0, d1-1), max(0, d2-1)
         nC, nCx1, nCx2 = self.C.shape[0], self.Cx[i1].shape[0], self.Cx[i2].shape[0]
         return MBIlib.evaluate(d1, d2, nx, nf, nC, nCx1, nCx2, nP, ks, ms, t, self.C, self.Cx[i1], self.Cx[i2])
