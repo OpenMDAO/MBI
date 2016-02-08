@@ -1,17 +1,21 @@
 from __future__ import division, print_function
-import numpy, scipy.sparse, scipy.sparse.linalg, time
+import numpy
+import scipy.sparse
+import scipy.sparse.linalg
+import warnings
 from . import MBIlib
 
 
 class MBI(object):
-
     def __init__(self, P, xs, ms0=None, ks0=None):
         nx = len(xs)
         nf = 1 if len(P.shape) is nx else P.shape[nx]
 
-        ns = numpy.array(P.shape[:nx],order='F')
-        ms = numpy.array([ms0[i] if ms0 is not None else int(ns[i]/3) for i in range(nx)],int)
-        ks = numpy.array([min(ks0[i] if ks0 is not None else 4, ms[i]) for i in range(nx)],int)
+        ns = numpy.array(P.shape[:nx], order='F')
+        ms = numpy.array([ms0[i] if ms0 is not None else int(ns[i]/3)
+                          for i in range(nx)], int)
+        ks = numpy.array([min(ks0[i] if ks0 is not None else 4, ms[i])
+                          for i in range(nx)], int)
         nT = numpy.prod(ns)
 
         self.xs = xs
@@ -21,24 +25,24 @@ class MBI(object):
         ts = []
         for i in range(nx):
             k, m, n = ks[i], ms[i], ns[i]
-            d = MBIlib.knotopen(k, k+m)
-            ts.append(MBIlib.paramuni(k+m, m, n, d))
+            d = MBIlib.knotopen(k, k + m)
+            ts.append(MBIlib.paramuni(k + m, m, n, d))
 
-        t = numpy.zeros(P.shape[:nx]+(nx,),order='F')
-        for ind,x in numpy.ndenumerate(t):
+        t = numpy.zeros(P.shape[:nx] + (nx,), order='F')
+        for ind, x in numpy.ndenumerate(t):
             t[ind] = ts[ind[-1]][ind[ind[-1]]]
-        t = t.reshape((nT,nx),order='F')
+        t = t.reshape((nT, nx), order='F')
         self.t = t
-        P = numpy.reshape(P,(nT,nf),order='F')
+        P = numpy.reshape(P, (nT, nf), order='F')
 
         B = self.getJacobian(0, 0)
         BT = B.transpose()
         BTB, BTP = BT.dot(B), BT.dot(P)
 
         nC = numpy.prod(ms)
-        C = numpy.zeros((nC,nf),order='F')
+        C = numpy.zeros((nC, nf), order='F')
         for i in range(nf):
-            C[:,i] = scipy.sparse.linalg.cg(BTB,BTP[:,i])[0]
+            C[:, i] = scipy.sparse.linalg.cg(BTB, BTP[:, i])[0]
 
         Cx = []
         for i in range(nx):
@@ -46,18 +50,28 @@ class MBI(object):
             B = self.assembleJacobian(0, 0, 1, n, k*n, k, m, ts[i])
             BT = B.transpose()
             BTB, BTP = BT.dot(B), BT.dot(xs[i])
-            Cx.append(scipy.sparse.linalg.cg(BTB,BTP)[0])
+            Cx.append(scipy.sparse.linalg.cg(BTB, BTP)[0])
             Cx[-1][0] = xs[i][0]
             Cx[-1][-1] = xs[i][-1]
 
         self.C, self.Cx = C, Cx
 
+        self._bounds_error = 'print'
+
     def assembleJacobian(self, d1, d2, nx, nP, nB, ks, ms, t):
         Ba, Bi, Bj = MBIlib.computejacobian(d1, d2, nx, nP, nB, ks, ms, t)
-        return scipy.sparse.csc_matrix((Ba,(Bi,Bj)))
+        return scipy.sparse.csc_matrix((Ba, (Bi, Bj)))
+
+    def seterr(self, bounds):
+        if bounds not in ('ignore', 'warn', 'raise', 'print'):
+            raise ValueError("Unacceptable value for bounds error behavior.\
+             Must be one of 'ignore', 'warn', 'raise', or 'print'")
+        self._bounds_error = bounds
 
     def getJacobian(self, d1, d2):
-        return self.assembleJacobian(d1, d2, self.nx, self.nT, self.nT*numpy.prod(self.ks), self.ks, self.ms, self.t)
+        return self.assembleJacobian(d1, d2, self.nx, self.nT,
+                                     self.nT*numpy.prod(self.ks), self.ks,
+                                     self.ms, self.t)
 
     def evaluate(self, x, d1=0, d2=0):
         nx, nf, nT = self.nx, self.nf, self.nT
@@ -67,16 +81,32 @@ class MBI(object):
         minV = numpy.min
         maxV = numpy.max
         for i in range(nx):
-            if minV(x[:,i]) < minV(self.Cx[i]):
-                print('MBI error: min value out of bounds', i, minV(x[:,i]), minV(self.Cx[i]))
-                #raise Exception('MBI evaluate error: min value out of bounds')
-            if maxV(x[:,i]) > maxV(self.Cx[i]):
-                print('MBI error: max value out of bounds', i, maxV(x[:,i]), maxV(self.Cx[i]))
-                #raise Exception('MBI evaluate error: max value out of bounds')
+            if minV(x[:, i]) < minV(self.Cx[i]):
+                if self._bounds_error == 'print':
+                    print('MBI error: min value out of bounds', i, minV(x[:, i]), minV(self.Cx[i]))
+                elif self._bounds_error == 'raise':
+                    raise ValueError('MBI error:  min value out of bounds at index {0}.  '
+                                     '{1} < {2}'.format(i, minV(x[:, i]), minV(self.Cx[i])))
+                elif self._bounds_error == 'warn':
+                    warnings.warn('MBI error:  min value out of bounds at index {0}.  '
+                                  '{1} < {2}'.format(i, minV(x[:, i]), minV(self.Cx[i])))
+                elif self._bounds_error == 'ignore':
+                    pass
+            if maxV(x[:, i]) > maxV(self.Cx[i]):
+                if self._bounds_error == 'print':
+                    print('MBI error: max value out of bounds', i, maxV(x[:, i]), maxV(self.Cx[i]))
+                elif self._bounds_error == 'raise':
+                    raise ValueError('MBI error:  max value out of bounds at index {0}.  '
+                                     '{1} < {2}'.format(i, maxV(x[:, i]), maxV(self.Cx[i])))
+                elif self._bounds_error == 'warn':
+                    warnings.warn('MBI error:  min value out of bounds at index {0}.  '
+                                  '{1} < {2}'.format(i, minV(x[:, i]), minV(self.Cx[i])))
+                elif self._bounds_error == 'ignore':
+                    pass
 
-        t = numpy.zeros((nP,nx),order='F')
+        t = numpy.zeros((nP, nx), order='F')
         for i in range(nx):
-            t[:,i] = MBIlib.inversemap(ks[i], ms[i], nP, x[:,i], self.Cx[i])
+            t[:, i] = MBIlib.inversemap(ks[i], ms[i], nP, x[:, i], self.Cx[i])
 
         i1, i2 = max(0, d1-1), max(0, d2-1)
         nC, nCx1, nCx2 = self.C.shape[0], self.Cx[i1].shape[0], self.Cx[i2].shape[0]
