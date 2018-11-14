@@ -99,8 +99,8 @@ class MBI(object):
                     raise ValueError('MBI error:  max value out of bounds at index {0}.  '
                                      '{1} < {2}'.format(i, maxV(x[:, i]), maxV(self.Cx[i])))
                 elif self._bounds_error == 'warn':
-                    warnings.warn('MBI error:  min value out of bounds at index {0}.  '
-                                  '{1} < {2}'.format(i, minV(x[:, i]), minV(self.Cx[i])))
+                    warnings.warn('MBI error:  max value out of bounds at index {0}.  '
+                                  '{1} < {2}'.format(i, maxV(x[:, i]), maxV(self.Cx[i])))
                 elif self._bounds_error == 'ignore':
                     pass
 
